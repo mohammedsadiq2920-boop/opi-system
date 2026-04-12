@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}رفع Excel - OPI System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1><i class="fas fa-file-excel"></i> رفع ملف Excel</h1>
+        <p>ارفع ملف Excel لإضافة بيانات جديدة وإعادة تدريب النموذج</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-upload"></i> رفع الملف</h2>
+
+    <!-- منطقة الرفع -->
+    <div id="dropZone"
+         style="border: 3px dashed #667eea; border-radius: 15px; padding: 60px 20px; text-align: center;
+                cursor: pointer; transition: all 0.3s; background: #f8f9ff; margin-top: 10px;"
+         onclick="document.getElementById('excelFile').click()"
+         ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 4em; color: #667eea; margin-bottom: 15px; display:block;"></i>
+        <div style="font-size: 1.2em; color: #2c3e50; margin-bottom: 8px; font-weight: 600;">
+            اضغط هنا أو اسحب ملف Excel
+        </div>
+        <div style="color: #95a5a6; font-size: 0.9em;">يدعم ملفات .xlsx و .xls فقط</div>
+        <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none;" onchange="handleFileSelect(event)">
+    </div>
+
+    <!-- شريط التقدم -->
+    <div id="progressArea" style="display:none; margin-top:20px;">
+        <div style="background:#f0f0f0; border-radius:20px; height:12px; overflow:hidden;">
+            <div id="progressBar" style="background: linear-gradient(135deg, #667eea, #764ba2); height:100%; width:0%; transition: width 0.4s; border-radius:20px;"></div>
+        </div>
+        <p id="progressText" style="text-align:center; margin-top:10px; color:#555; font-size:0.95em;">جاري الرفع...</p>
+    </div>
+</div>
+
+<!-- تنسيق الملف المطلوب -->
+<div class="card">
+    <h2><i class="fas fa-info-circle"></i> تنسيق الملف المطلوب</h2>
+    <p style="color:#555; margin-bottom:15px;">يجب أن يحتوي ملف Excel على الأعمدة التالية (العربية أو الإنجليزية):</p>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>العمود العربي</th>
+                    <th>العمود الإنجليزي</th>
+                    <th>الوصف</th>
+                    <th>مطلوب</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>تاريخ</td>
+                    <td>THEDATE / date</td>
+                    <td>تاريخ القياس</td>
+                    <td><span class="badge badge-success">نعم</span></td>
+                </tr>
+                <tr>
+                    <td>السائل المستخرج</td>
+                    <td>DAILY LIQUID</td>
+                    <td>إجمالي السائل (م³/يوم)</td>
+                    <td><span class="badge badge-success">نعم</span></td>
+                </tr>
+                <tr>
+                    <td>النفط المستخرج</td>
+                    <td>DAILYOIL</td>
+                    <td>إنتاج النفط (م³/يوم)</td>
+                    <td><span class="badge badge-success">نعم</span></td>
+                </tr>
+                <tr>
+                    <td>الماء المستخرج</td>
+                    <td>QW</td>
+                    <td>إنتاج الماء (م³/يوم)</td>
+                    <td><span class="badge badge-success">نعم</span></td>
+                </tr>
+                <tr>
+                    <td>نسبة الماء</td>
+                    <td>WATER CUT</td>
+                    <td>نسبة الماء %</td>
+                    <td><span class="badge badge-success">نعم</span></td>
+                </tr>
+                <tr>
+                    <td>الضغط الأعلى</td>
+                    <td>UPSTREAMPRES</td>
+                    <td>الضغط الأعلى (بار)</td>
+                    <td><span class="badge badge-warning">اختياري</span></td>
+                </tr>
+                <tr>
+                    <td>الضغط الأدنى</td>
+                    <td>DOWNSTREAMPRES</td>
+                    <td>الضغط الأدنى (بار)</td>
+                    <td><span class="badge badge-warning">اختياري</span></td>
+                </tr>
+                <tr>
+                    <td>فتحة الخانق</td>
+                    <td>CHOKESIZE</td>
+                    <td>حجم فتحة الخانق</td>
+                    <td><span class="badge badge-warning">اختياري</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p style="margin-top:15px; color:#e74c3c; font-size:0.9em;">
+        <i class="fas fa-exclamation-triangle"></i>
+        ملاحظة: الحقول الفارغة أو غير الموجودة سيتم تجاهلها تلقائياً.
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('dropZone').addEventListener('click', function(e) {
+    if (e.target !== document.getElementById('excelFile')) {
+        document.getElementById('excelFile').click();
+    }
+});
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) uploadFile(file);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.style.background = '#e8e9ff';
+    e.currentTarget.style.borderColor = '#764ba2';
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.style.background = '#f8f9ff';
+    e.currentTarget.style.borderColor = '#667eea';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.style.background = '#f8f9ff';
+    e.currentTarget.style.borderColor = '#667eea';
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+        uploadFile(file);
+    } else {
+        showAlert('يرجى رفع ملف Excel فقط (.xlsx أو .xls)', 'error');
+    }
+}
+
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const progressArea = document.getElementById('progressArea');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    progressArea.style.display = 'block';
+    progressBar.style.width = '30%';
+    progressText.textContent = 'جاري رفع الملف...';
+
+    try {
+        progressBar.style.width = '60%';
+        const res = await fetch('/api/upload', {method:'POST', body: formData});
+        const result = await res.json();
+
+        if (res.ok) {
+            progressBar.style.width = '100%';
+            progressText.textContent = '✓ تم الرفع بنجاح!';
+            showAlert(`تمت إضافة ${result.added_count} سجل بنجاح. ${result.retrain_message || ''}`, 'success');
+            setTimeout(() => {
+                progressArea.style.display = 'none';
+                progressBar.style.width = '0%';
+                document.getElementById('excelFile').value = '';
+            }, 3000);
+        } else {
+            progressArea.style.display = 'none';
+            showAlert(result.error || 'حدث خطأ أثناء رفع الملف', 'error');
+        }
+    } catch(e) {
+        progressArea.style.display = 'none';
+        showAlert('خطأ في الاتصال بالخادم', 'error');
+        console.error(e);
+    }
+}
+</script>
+{% endblock %}

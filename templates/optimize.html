@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}تحسين الإنتاج - OPI System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .improvement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .improvement-item {
+        background: rgba(255,255,255,0.15);
+        border-radius: 12px;
+        padding: 18px;
+        text-align: center;
+        backdrop-filter: blur(5px);
+    }
+
+    .improvement-item .value {
+        font-size: 1.8em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .improvement-item .label {
+        font-size: 0.82em;
+        opacity: 0.85;
+    }
+
+    .arrow-up { color: #2ecc71; }
+    .arrow-down { color: #e74c3c; }
+    .arrow-neutral { color: #f39c12; }
+
+    .suggestion-box {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        border-right: 5px solid #667eea;
+    }
+
+    .suggestion-box h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+
+    .suggestion-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .suggestion-row:last-child { border-bottom: none; }
+
+    .suggestion-label { color: #555; font-size: 0.95em; }
+
+    .suggestion-change {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-weight: 600;
+    }
+
+    .current-val { color: #95a5a6; font-size: 0.9em; }
+    .arrow-icon { font-size: 1.2em; }
+    .new-val { color: #2c3e50; font-size: 1.05em; }
+
+    .confidence-bar {
+        background: #f0f0f0;
+        border-radius: 20px;
+        height: 8px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        transition: width 1s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1><i class="fas fa-sliders-h"></i> تحسين الإنتاج</h1>
+        <p>أدخل بيانات الوضع الحالي وسيقترح النظام التعديلات المثلى</p>
+    </div>
+</div>
+
+<!-- نموذج الإدخال -->
+<div class="card">
+    <h2><i class="fas fa-edit"></i> بيانات الوضع الحالي</h2>
+
+    <div class="section-divider">بيانات الإنتاج</div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label>🛢️ السائل المستخرج (م³/يوم)</label>
+            <input type="number" id="total_liquid" step="0.01" min="0" placeholder="مثال: 1304">
+            <div class="hint">إجمالي السائل المستخرج يومياً</div>
+        </div>
+        <div class="form-group">
+            <label>🟤 النفط المستخرج (م³/يوم)</label>
+            <input type="number" id="oil_production" step="0.01" min="0" placeholder="مثال: 1147">
+            <div class="hint">إنتاج النفط اليومي</div>
+        </div>
+        <div class="form-group">
+            <label>💧 الماء المستخرج (م³/يوم)</label>
+            <input type="number" id="water_production" step="0.01" min="0" placeholder="مثال: 157">
+            <div class="hint">إنتاج الماء اليومي</div>
+        </div>
+        <div class="form-group">
+            <label>📊 نسبة الماء الحالية (%)</label>
+            <input type="number" id="water_cut" step="0.1" min="0" max="100" placeholder="مثال: 12">
+            <div class="hint">نسبة الماء من إجمالي الإنتاج</div>
+        </div>
+    </div>
+
+    <div class="section-divider">معاملات التشغيل</div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label>🔺 الضغط الأعلى (بار)</label>
+            <input type="number" id="upstream_pres" step="0.1" min="0" max="58" placeholder="مثال: 30.3">
+            <div class="hint">النطاق: 0 - 58 بار</div>
+        </div>
+        <div class="form-group">
+            <label>🔻 الضغط الأدنى (بار)</label>
+            <input type="number" id="downstream_pres" step="0.1" min="0" max="38.6" placeholder="مثال: 21">
+            <div class="hint">النطاق: 0 - 38.6 بار</div>
+        </div>
+        <div class="form-group">
+            <label>⚙️ فتحة الخانق (64th inch)</label>
+            <input type="number" id="choke_size" step="1" min="0" max="128" placeholder="مثال: 32">
+            <div class="hint">النطاق: 0 - 128</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 25px; display: flex; gap: 15px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="getOptimization()">
+            <i class="fas fa-magic"></i> احصل على اقتراح التحسين
+        </button>
+        <button class="btn" style="background:#f0f0f0; color:#555;" onclick="clearForm()">
+            <i class="fas fa-redo"></i> مسح
+        </button>
+    </div>
+</div>
+
+<!-- Loading -->
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p style="color:white; font-size: 1.1em;">جاري تحليل البيانات واقتراح التحسين...</p>
+</div>
+
+<!-- نتائج التحسين -->
+<div id="resultsSection" style="display:none;">
+
+    <!-- ملخص التحسين المتوقع -->
+    <div class="result-card">
+        <h2 style="color:white; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom:12px; margin-bottom:15px;">
+            <i class="fas fa-chart-line"></i> التحسين المتوقع بعد التعديل
+        </h2>
+        <div class="improvement-grid">
+            <div class="improvement-item">
+                <div class="value" id="res_current_oil">-</div>
+                <div class="label">النفط الحالي (م³/يوم)</div>
+            </div>
+            <div class="improvement-item">
+                <div class="value arrow-up" id="res_new_oil">-</div>
+                <div class="label">النفط المتوقع (م³/يوم)</div>
+            </div>
+            <div class="improvement-item">
+                <div class="value arrow-up" id="res_oil_gain">-</div>
+                <div class="label">زيادة النفط</div>
+            </div>
+            <div class="improvement-item">
+                <div class="value" id="res_current_wc">-</div>
+                <div class="label">نسبة الماء الحالية</div>
+            </div>
+            <div class="improvement-item">
+                <div class="value arrow-down" id="res_new_wc">-</div>
+                <div class="label">نسبة الماء المتوقعة</div>
+            </div>
+            <div class="improvement-item">
+                <div class="value arrow-down" id="res_wc_reduction">-</div>
+                <div class="label">تقليل نسبة الماء</div>
+            </div>
+        </div>
+
+        <!-- شريط الثقة -->
+        <div style="margin-top: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-size:0.9em; opacity:0.9;">مستوى الثقة بالاقتراح</span>
+                <span id="confidenceText" style="font-weight:bold;">-</span>
+            </div>
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceFill" style="width:0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- اقتراحات التعديل -->
+    <div class="card">
+        <h2><i class="fas fa-tools"></i> اقتراحات التعديل</h2>
+        <div class="suggestion-box">
+            <h3><i class="fas fa-compress-arrows-alt"></i> معاملات التشغيل المقترحة</h3>
+            <div class="suggestion-row">
+                <span class="suggestion-label">🔺 الضغط الأعلى (بار)</span>
+                <div class="suggestion-change">
+                    <span class="current-val" id="sug_cur_upstream">-</span>
+                    <span class="arrow-icon">←</span>
+                    <span class="new-val" id="sug_new_upstream">-</span>
+                    <span id="sug_upstream_badge"></span>
+                </div>
+            </div>
+            <div class="suggestion-row">
+                <span class="suggestion-label">🔻 الضغط الأدنى (بار)</span>
+                <div class="suggestion-change">
+                    <span class="current-val" id="sug_cur_downstream">-</span>
+                    <span class="arrow-icon">←</span>
+                    <span class="new-val" id="sug_new_downstream">-</span>
+                    <span id="sug_downstream_badge"></span>
+                </div>
+            </div>
+            <div class="suggestion-row">
+                <span class="suggestion-label">⚙️ فتحة الخانق</span>
+                <div class="suggestion-change">
+                    <span class="current-val" id="sug_cur_choke">-</span>
+                    <span class="arrow-icon">←</span>
+                    <span class="new-val" id="sug_new_choke">-</span>
+                    <span id="sug_choke_badge"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ملاحظة النموذج -->
+        <div id="modelNote" style="margin-top:20px; padding:15px; background:#fef9e7; border-radius:10px; border-right:4px solid #f39c12; display:none;">
+            <i class="fas fa-info-circle" style="color:#f39c12;"></i>
+            <span id="modelNoteText" style="color:#555; font-size:0.95em; margin-right:8px;"></span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function getOptimization() {
+    const fields = ['total_liquid','oil_production','water_production','water_cut','upstream_pres','downstream_pres','choke_size'];
+    const data = {};
+    let hasAny = false;
+
+    for (const f of fields) {
+        const val = document.getElementById(f).value;
+        if (val !== '') {
+            data[f] = parseFloat(val);
+            hasAny = true;
+        } else {
+            data[f] = null;
+        }
+    }
+
+    // التحقق من الحقول الأساسية
+    if (data.oil_production === null || data.water_cut === null) {
+        showAlert('يرجى إدخال على الأقل: النفط المستخرج ونسبة الماء', 'error');
+        return;
+    }
+
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('resultsSection').style.display = 'none';
+
+    try {
+        const res = await fetch('/api/optimize', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+            showAlert(result.error || 'حدث خطأ', 'error');
+            return;
+        }
+
+        displayResults(data, result);
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+
+    } catch(e) {
+        showAlert('خطأ في الاتصال بالخادم', 'error');
+        console.error(e);
+    } finally {
+        document.getElementById('loading').classList.remove('show');
+    }
+}
+
+function displayResults(input, result) {
+    const opt = result.optimized;
+    const imp = result.improvement;
+
+    // ملخص التحسين
+    document.getElementById('res_current_oil').textContent = (input.oil_production || 0).toFixed(1);
+    document.getElementById('res_new_oil').textContent = opt.predicted_oil.toFixed(1);
+    document.getElementById('res_oil_gain').textContent = '+' + imp.oil_gain.toFixed(1) + ' م³';
+    document.getElementById('res_current_wc').textContent = (input.water_cut || 0).toFixed(1) + '%';
+    document.getElementById('res_new_wc').textContent = opt.predicted_water_cut.toFixed(1) + '%';
+    document.getElementById('res_wc_reduction').textContent = '-' + imp.water_cut_reduction.toFixed(1) + '%';
+
+    // الثقة
+    const conf = Math.round(result.confidence * 100);
+    document.getElementById('confidenceText').textContent = conf + '%';
+    document.getElementById('confidenceFill').style.width = conf + '%';
+
+    // اقتراحات التعديل
+    const params = [
+        ['upstream', 'الضغط الأعلى', input.upstream_pres, opt.upstream_pres],
+        ['downstream', 'الضغط الأدنى', input.downstream_pres, opt.downstream_pres],
+        ['choke', 'فتحة الخانق', input.choke_size, opt.choke_size]
+    ];
+
+    params.forEach(([key, label, cur, newVal]) => {
+        const curEl = document.getElementById(`sug_cur_${key}`);
+        const newEl = document.getElementById(`sug_new_${key}`);
+        const badgeEl = document.getElementById(`sug_${key}_badge`);
+
+        curEl.textContent = cur !== null ? cur.toFixed(1) : 'غير محدد';
+        newEl.textContent = newVal !== null ? newVal.toFixed(1) : '-';
+
+        if (cur !== null && newVal !== null) {
+            const diff = newVal - cur;
+            if (Math.abs(diff) < 0.1) {
+                badgeEl.innerHTML = '<span class="badge badge-warning">لا تغيير</span>';
+            } else if (diff > 0) {
+                badgeEl.innerHTML = `<span class="badge badge-success">▲ +${diff.toFixed(1)}</span>`;
+            } else {
+                badgeEl.innerHTML = `<span class="badge badge-danger">▼ ${diff.toFixed(1)}</span>`;
+            }
+        }
+    });
+
+    // ملاحظة
+    if (result.note) {
+        document.getElementById('modelNote').style.display = 'block';
+        document.getElementById('modelNoteText').textContent = result.note;
+    }
+}
+
+function clearForm() {
+    ['total_liquid','oil_production','water_production','water_cut','upstream_pres','downstream_pres','choke_size']
+        .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('resultsSection').style.display = 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}البيانات المحفوظة - OPI System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1><i class="fas fa-database"></i> البيانات المحفوظة</h1>
+        <p>عرض وإدارة جميع بيانات الإنتاج في النظام</p>
+    </div>
+    <button class="btn btn-danger" onclick="deleteAllData()">
+        <i class="fas fa-trash"></i> حذف الكل
+    </button>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-table"></i> جدول بيانات الإنتاج</h2>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="margin-top:10px; color:#777;">جاري تحميل البيانات...</p>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>التاريخ</th>
+                    <th>السائل (م³)</th>
+                    <th>النفط (م³)</th>
+                    <th>الماء (م³)</th>
+                    <th>نسبة الماء %</th>
+                    <th>الضغط الأعلى</th>
+                    <th>الضغط الأدنى</th>
+                    <th>فتحة الخانق</th>
+                    <th style="text-align:center;">حذف</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody">
+                <tr><td colspan="9" style="text-align:center; padding:30px; color:#aaa;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadData() {
+    document.getElementById('loading').classList.add('show');
+    try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        if (res.ok) renderTable(data);
+        else showAlert('خطأ في تحميل البيانات', 'error');
+    } catch(e) {
+        showAlert('خطأ في الاتصال', 'error');
+    } finally {
+        document.getElementById('loading').classList.remove('show');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('dataBody');
+    if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#aaa;">لا توجد بيانات</td></tr>';
+        return;
+    }
+
+    const fmt = (v, d=2) => (v !== null && v !== undefined) ? parseFloat(v).toFixed(d) : '-';
+
+    tbody.innerHTML = data.map(r => `
+        <tr>
+            <td>${r.date}</td>
+            <td>${fmt(r.total_liquid)}</td>
+            <td>${fmt(r.oil_production)}</td>
+            <td>${fmt(r.water_production)}</td>
+            <td>
+                <span class="badge ${parseFloat(r.water_cut) > 60 ? 'badge-danger' : parseFloat(r.water_cut) > 30 ? 'badge-warning' : 'badge-success'}">
+                    ${fmt(r.water_cut, 1)}%
+                </span>
+            </td>
+            <td>${fmt(r.upstream_pres, 1)}</td>
+            <td>${fmt(r.downstream_pres, 1)}</td>
+            <td>${fmt(r.choke_size, 0)}</td>
+            <td style="text-align:center;">
+                <button onclick="deleteRow(${r.id})" class="btn btn-danger" style="padding:6px 14px; font-size:0.85em;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function deleteRow(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
+    try {
+        const res = await fetch(`/api/data/${id}`, {method:'DELETE'});
+        const r = await res.json();
+        if (res.ok) { showAlert('تم الحذف بنجاح', 'success'); loadData(); }
+        else showAlert(r.error || 'خطأ في الحذف', 'error');
+    } catch(e) { showAlert('خطأ في الاتصال', 'error'); }
+}
+
+async function deleteAllData() {
+    if (!confirm('هل أنت متأكد من حذف جميع البيانات؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    try {
+        const res = await fetch('/api/data/all', {method:'DELETE'});
+        const r = await res.json();
+        if (res.ok) { showAlert('تم حذف جميع البيانات', 'success'); loadData(); }
+        else showAlert(r.error || 'خطأ', 'error');
+    } catch(e) { showAlert('خطأ في الاتصال', 'error'); }
+}
+
+loadData();
+</script>
+{% endblock %}
