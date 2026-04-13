@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <style>
+    /* Chart.js CDN loaded below */
     .result-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 15px;
@@ -39,7 +40,6 @@
 
     .arrow-up { color: #2ecc71; }
     .arrow-down { color: #e74c3c; }
-    .arrow-neutral { color: #f39c12; }
 
     .suggestion-box {
         background: white;
@@ -64,7 +64,6 @@
     }
 
     .suggestion-row:last-child { border-bottom: none; }
-
     .suggestion-label { color: #555; font-size: 0.95em; }
 
     .suggestion-change {
@@ -79,7 +78,7 @@
     .new-val { color: #2c3e50; font-size: 1.05em; }
 
     .confidence-bar {
-        background: #f0f0f0;
+        background: rgba(255,255,255,0.2);
         border-radius: 20px;
         height: 8px;
         overflow: hidden;
@@ -90,20 +89,179 @@
         height: 100%;
         border-radius: 20px;
         background: linear-gradient(135deg, #43e97b, #38f9d7);
-        transition: width 1s ease;
+        transition: width 1.2s ease;
     }
+
+    /* ── الرسم البياني ── */
+    .chart-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    @media (max-width: 768px) {
+        .chart-section { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .chart-card h3 {
+        color: #2c3e50;
+        font-size: 1em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    /* ── شرح الخوارزمية ── */
+    .algo-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .algo-section h2 {
+        color: #2c3e50;
+        font-size: 1.3em;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .algo-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+        margin-bottom: 25px;
+    }
+
+    .algo-step {
+        border-radius: 12px;
+        padding: 18px;
+        border-right: 4px solid;
+        background: #fafbff;
+    }
+
+    .algo-step.step-1 { border-color: #667eea; }
+    .algo-step.step-2 { border-color: #f093fb; }
+    .algo-step.step-3 { border-color: #43e97b; }
+    .algo-step.step-4 { border-color: #4facfe; }
+
+    .algo-step .step-num {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.85em;
+        color: white;
+        margin-bottom: 10px;
+    }
+
+    .step-1 .step-num { background: #667eea; }
+    .step-2 .step-num { background: #f093fb; }
+    .step-3 .step-num { background: #43e97b; }
+    .step-4 .step-num { background: #4facfe; }
+
+    .algo-step h4 { color: #2c3e50; margin-bottom: 8px; font-size: 0.95em; }
+    .algo-step p  { color: #666; font-size: 0.85em; line-height: 1.6; }
+
+    /* ── معادلات ── */
+    .formula-box {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 12px;
+        padding: 20px 25px;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        color: #e0e0e0;
+        direction: ltr;
+        overflow-x: auto;
+    }
+
+    .formula-box .formula-title {
+        color: #a78bfa;
+        font-size: 0.8em;
+        margin-bottom: 8px;
+        font-family: 'Segoe UI', sans-serif;
+        direction: rtl;
+        text-align: right;
+    }
+
+    .formula-box .formula-line {
+        color: #67e8f9;
+        font-size: 1em;
+        padding: 4px 0;
+    }
+
+    .formula-box .formula-comment {
+        color: #6b7280;
+        font-size: 0.82em;
+    }
+
+    .formula-box .formula-highlight {
+        color: #34d399;
+        font-weight: bold;
+    }
+
+    /* ── جدول النتائج التفصيلية ── */
+    .result-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .result-detail-table th {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 12px 15px;
+        text-align: right;
+        font-size: 0.88em;
+    }
+
+    .result-detail-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.9em;
+        color: #2c3e50;
+    }
+
+    .result-detail-table tr:nth-child(even) td {
+        background: #fafbff;
+    }
+
+    .val-current { color: #95a5a6; font-weight: 600; }
+    .val-proposed { color: #667eea; font-weight: 700; }
+    .val-improve-pos { color: #27ae60; font-weight: 700; }
+    .val-improve-neg { color: #e74c3c; font-weight: 700; }
 </style>
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="page-header-left">
         <h1><i class="fas fa-sliders-h"></i> تحسين الإنتاج</h1>
-        <p>أدخل بيانات الوضع الحالي وسيقترح النظام التعديلات المثلى</p>
+        <p>أدخل بيانات الوضع الحالي وسيقترح النظام التعديلات المثلى باستخدام الشبكة العصبية</p>
     </div>
 </div>
 
-<!-- نموذج الإدخال -->
+<!-- ── نموذج الإدخال ── -->
 <div class="card">
     <h2><i class="fas fa-edit"></i> بيانات الوضع الحالي</h2>
 
@@ -166,12 +324,14 @@
     <p style="color:white; font-size: 1.1em;">جاري تحليل البيانات واقتراح التحسين...</p>
 </div>
 
-<!-- نتائج التحسين -->
+<!-- ══════════════════════════════════════════
+     قسم النتائج
+══════════════════════════════════════════ -->
 <div id="resultsSection" style="display:none;">
 
     <!-- ملخص التحسين المتوقع -->
     <div class="result-card">
-        <h2 style="color:white; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom:12px; margin-bottom:15px;">
+        <h2 style="color:white; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:12px; margin-bottom:15px;">
             <i class="fas fa-chart-line"></i> التحسين المتوقع بعد التعديل
         </h2>
         <div class="improvement-grid">
@@ -201,7 +361,6 @@
             </div>
         </div>
 
-        <!-- شريط الثقة -->
         <div style="margin-top: 20px;">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                 <span style="font-size:0.9em; opacity:0.9;">مستوى الثقة بالاقتراح</span>
@@ -211,6 +370,28 @@
                 <div class="confidence-fill" id="confidenceFill" style="width:0%"></div>
             </div>
         </div>
+    </div>
+
+    <!-- ══ الرسوم البيانية ══ -->
+    <div class="chart-section">
+        <!-- رسم الإنتاج -->
+        <div class="chart-card">
+            <h3><i class="fas fa-oil-can" style="color:#667eea;"></i> مقارنة إنتاج النفط والماء</h3>
+            <canvas id="productionChart" height="220"></canvas>
+        </div>
+        <!-- رسم معاملات التشغيل -->
+        <div class="chart-card">
+            <h3><i class="fas fa-sliders-h" style="color:#764ba2;"></i> مقارنة معاملات التشغيل</h3>
+            <canvas id="paramsChart" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- رسم شريطي لنسبة الماء -->
+    <div class="chart-card" style="margin-bottom:25px; padding:20px;">
+        <h3 style="color:#2c3e50; font-size:1em; margin-bottom:15px; display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:2px solid #f0f0f0;">
+            <i class="fas fa-tint" style="color:#e74c3c;"></i> تغيّر نسبة الماء (%)
+        </h3>
+        <canvas id="waterCutChart" height="100"></canvas>
     </div>
 
     <!-- اقتراحات التعديل -->
@@ -247,34 +428,121 @@
             </div>
         </div>
 
-        <!-- ملاحظة النموذج -->
+        <!-- جدول النتائج التفصيلية -->
+        <div style="margin-top:25px;">
+            <h3 style="color:#2c3e50; font-size:1.05em; margin-bottom:12px;"><i class="fas fa-table"></i> جدول النتائج التفصيلية</h3>
+            <div style="overflow-x:auto;">
+                <table class="result-detail-table">
+                    <thead>
+                        <tr>
+                            <th>المعامل</th>
+                            <th>الوضع الحالي</th>
+                            <th>الوضع المقترح</th>
+                            <th>التغيير</th>
+                            <th>نسبة التحسين</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="modelNote" style="margin-top:20px; padding:15px; background:#fef9e7; border-radius:10px; border-right:4px solid #f39c12; display:none;">
             <i class="fas fa-info-circle" style="color:#f39c12;"></i>
             <span id="modelNoteText" style="color:#555; font-size:0.95em; margin-right:8px;"></span>
         </div>
     </div>
-</div>
 
+    <!-- ══ شرح الخوارزمية والمعادلات ══ -->
+    <div class="algo-section">
+        <h2><i class="fas fa-brain"></i> كيف تعمل الخوارزمية؟ شرح تفصيلي للنتائج</h2>
+
+        <!-- خطوات الخوارزمية -->
+        <div class="algo-steps">
+            <div class="algo-step step-1">
+                <div class="step-num">1</div>
+                <h4>تطبيع البيانات (Normalization)</h4>
+                <p>يتم تحويل جميع المدخلات إلى نطاق موحّد باستخدام <strong>StandardScaler</strong> لضمان تساوي تأثير المتغيرات على الشبكة.</p>
+            </div>
+            <div class="algo-step step-2">
+                <div class="step-num">2</div>
+                <h4>الشبكة العصبية (MLP Neural Network)</h4>
+                <p>تمرّ البيانات عبر <strong>3 طبقات مخفية</strong> (128→64→32 خلية) باستخدام دالة تنشيط <strong>ReLU</strong>.</p>
+            </div>
+            <div class="algo-step step-3">
+                <div class="step-num">3</div>
+                <h4>خوارزمية التحسين (L-BFGS-B)</h4>
+                <p>تبحث خوارزمية <strong>L-BFGS-B</strong> عن أفضل قيم للضغطين والخانق عبر تعظيم النفط وتقليل نسبة الماء.</p>
+            </div>
+            <div class="algo-step step-4">
+                <div class="step-num">4</div>
+                <h4>حساب مستوى الثقة</h4>
+                <p>يُحسب مستوى الثقة بناءً على <strong>دقة النموذج R²</strong> وعدد سجلات التدريب المتاحة.</p>
+            </div>
+        </div>
+
+        <!-- المعادلات -->
+        <h3 style="color:#2c3e50; margin-bottom:12px; font-size:1.05em;"><i class="fas fa-function"></i> المعادلات المستخدمة</h3>
+
+        <div class="formula-box">
+            <div class="formula-title">① تطبيع البيانات — StandardScaler</div>
+            <div class="formula-line">X_scaled = (X - μ) / σ</div>
+            <div class="formula-comment">  حيث: μ = متوسط التدريب،  σ = الانحراف المعياري</div>
+        </div>
+
+        <div class="formula-box">
+            <div class="formula-title">② دالة التنشيط — ReLU</div>
+            <div class="formula-line">f(x) = <span class="formula-highlight">max(0, x)</span></div>
+            <div class="formula-comment">  تُفعّل الخلية العصبية فقط إذا كانت القيمة موجبة</div>
+        </div>
+
+        <div class="formula-box">
+            <div class="formula-title">③ دالة الهدف — هدف التحسين (يتم تصغيرها)</div>
+            <div class="formula-line">Objective(P_up, P_down, Choke) =</div>
+            <div class="formula-line">    <span class="formula-highlight">-Oil_predicted</span>  +  0.5 × WC_predicted</div>
+            <div class="formula-comment">  نُصغّر الدالة: سالب النفط = تعظيم النفط، + 0.5 × الماء = تقليل الماء</div>
+        </div>
+
+        <div class="formula-box">
+            <div class="formula-title">④ مؤشر الدقة — R² Score</div>
+            <div class="formula-line">R² = 1 - (SS_res / SS_tot)</div>
+            <div class="formula-comment">  SS_res = Σ(y - ŷ)²    |    SS_tot = Σ(y - ȳ)²</div>
+            <div class="formula-comment">  R² = 1.0 → دقة مثالية    |    R² = 0 → النموذج يعادل المتوسط</div>
+        </div>
+
+        <div class="formula-box">
+            <div class="formula-title">⑤ مستوى الثقة المحسوب</div>
+            <div class="formula-line">Confidence = min(0.95,  max(0.3,  R² × 0.9  +  min(N/1000, 0.1)))</div>
+            <div class="formula-comment">  حيث N = عدد سجلات التدريب</div>
+        </div>
+
+        <!-- تفسير النتائج الحالية -->
+        <h3 style="color:#2c3e50; margin: 20px 0 12px; font-size:1.05em;"><i class="fas fa-lightbulb"></i> تفسير نتائجك</h3>
+        <div id="algoExplanation" style="background:#f8f9ff; border-radius:12px; padding:20px; color:#444; line-height:1.9; font-size:0.93em;">
+            <!-- يُملأ بـ JS -->
+        </div>
+    </div>
+
+</div><!-- /resultsSection -->
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// ── مثيلات الرسوم ──
+let chartProduction = null;
+let chartParams     = null;
+let chartWaterCut   = null;
+
 async function getOptimization() {
-    const fields = ['total_liquid','oil_production','water_production','water_cut','upstream_pres','downstream_pres','choke_size'];
+    const fields = ['total_liquid','oil_production','water_production','water_cut',
+                    'upstream_pres','downstream_pres','choke_size'];
     const data = {};
-    let hasAny = false;
 
     for (const f of fields) {
         const val = document.getElementById(f).value;
-        if (val !== '') {
-            data[f] = parseFloat(val);
-            hasAny = true;
-        } else {
-            data[f] = null;
-        }
+        data[f] = val !== '' ? parseFloat(val) : null;
     }
 
-    // التحقق من الحقول الأساسية
     if (data.oil_production === null || data.water_cut === null) {
         showAlert('يرجى إدخال على الأقل: النفط المستخرج ونسبة الماء', 'error');
         return;
@@ -289,69 +557,69 @@ async function getOptimization() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
         });
-
         const result = await res.json();
 
-        if (!res.ok) {
-            showAlert(result.error || 'حدث خطأ', 'error');
-            return;
-        }
+        if (!res.ok) { showAlert(result.error || 'حدث خطأ', 'error'); return; }
 
         displayResults(data, result);
         document.getElementById('resultsSection').style.display = 'block';
-        document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+        setTimeout(() => {
+            document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+        }, 100);
 
     } catch(e) {
         showAlert('خطأ في الاتصال بالخادم', 'error');
-        console.error(e);
     } finally {
         document.getElementById('loading').classList.remove('show');
     }
 }
 
+// ── عرض كل النتائج ──
 function displayResults(input, result) {
     const opt = result.optimized;
     const imp = result.improvement;
 
-    // ملخص التحسين
-    document.getElementById('res_current_oil').textContent = (input.oil_production || 0).toFixed(1);
-    document.getElementById('res_new_oil').textContent = opt.predicted_oil.toFixed(1);
-    document.getElementById('res_oil_gain').textContent = '+' + imp.oil_gain.toFixed(1) + ' م³';
-    document.getElementById('res_current_wc').textContent = (input.water_cut || 0).toFixed(1) + '%';
-    document.getElementById('res_new_wc').textContent = opt.predicted_water_cut.toFixed(1) + '%';
+    // ① ملخص التحسين
+    document.getElementById('res_current_oil').textContent  = (input.oil_production||0).toFixed(1);
+    document.getElementById('res_new_oil').textContent      = opt.predicted_oil.toFixed(1);
+    document.getElementById('res_oil_gain').textContent     = '+' + imp.oil_gain.toFixed(1) + ' م³';
+    document.getElementById('res_current_wc').textContent   = (input.water_cut||0).toFixed(1) + '%';
+    document.getElementById('res_new_wc').textContent       = opt.predicted_water_cut.toFixed(1) + '%';
     document.getElementById('res_wc_reduction').textContent = '-' + imp.water_cut_reduction.toFixed(1) + '%';
 
-    // الثقة
+    // شريط الثقة
     const conf = Math.round(result.confidence * 100);
     document.getElementById('confidenceText').textContent = conf + '%';
-    document.getElementById('confidenceFill').style.width = conf + '%';
+    setTimeout(() => {
+        document.getElementById('confidenceFill').style.width = conf + '%';
+    }, 300);
 
-    // اقتراحات التعديل
+    // ② اقتراحات التعديل
     const params = [
-        ['upstream', 'الضغط الأعلى', input.upstream_pres, opt.upstream_pres],
-        ['downstream', 'الضغط الأدنى', input.downstream_pres, opt.downstream_pres],
-        ['choke', 'فتحة الخانق', input.choke_size, opt.choke_size]
+        ['upstream',   input.upstream_pres,   opt.upstream_pres],
+        ['downstream', input.downstream_pres, opt.downstream_pres],
+        ['choke',      input.choke_size,      opt.choke_size]
     ];
-
-    params.forEach(([key, label, cur, newVal]) => {
-        const curEl = document.getElementById(`sug_cur_${key}`);
-        const newEl = document.getElementById(`sug_new_${key}`);
-        const badgeEl = document.getElementById(`sug_${key}_badge`);
-
-        curEl.textContent = cur !== null ? cur.toFixed(1) : 'غير محدد';
-        newEl.textContent = newVal !== null ? newVal.toFixed(1) : '-';
-
-        if (cur !== null && newVal !== null) {
-            const diff = newVal - cur;
-            if (Math.abs(diff) < 0.1) {
-                badgeEl.innerHTML = '<span class="badge badge-warning">لا تغيير</span>';
-            } else if (diff > 0) {
-                badgeEl.innerHTML = `<span class="badge badge-success">▲ +${diff.toFixed(1)}</span>`;
-            } else {
-                badgeEl.innerHTML = `<span class="badge badge-danger">▼ ${diff.toFixed(1)}</span>`;
-            }
+    params.forEach(([key, cur, nv]) => {
+        document.getElementById(`sug_cur_${key}`).textContent = cur !== null ? cur.toFixed(1) : 'غير محدد';
+        document.getElementById(`sug_new_${key}`).textContent = nv !== null ? nv.toFixed(1) : '-';
+        const badge = document.getElementById(`sug_${key}_badge`);
+        if (cur !== null && nv !== null) {
+            const diff = nv - cur;
+            if (Math.abs(diff) < 0.1) badge.innerHTML = '<span class="badge badge-warning">لا تغيير</span>';
+            else if (diff > 0)        badge.innerHTML = `<span class="badge badge-success">▲ +${diff.toFixed(1)}</span>`;
+            else                      badge.innerHTML = `<span class="badge badge-danger">▼ ${diff.toFixed(1)}</span>`;
         }
     });
+
+    // ③ جدول التفاصيل
+    buildDetailTable(input, opt, imp);
+
+    // ④ الرسوم البيانية
+    buildCharts(input, opt);
+
+    // ⑤ شرح الخوارزمية
+    buildExplanation(input, opt, imp, result.confidence);
 
     // ملاحظة
     if (result.note) {
@@ -360,10 +628,224 @@ function displayResults(input, result) {
     }
 }
 
+// ── جدول التفاصيل ──
+function buildDetailTable(input, opt, imp) {
+    const rows = [
+        { label: '🟤 إنتاج النفط (م³/يوم)',   cur: input.oil_production,   prop: opt.predicted_oil,        higher: true },
+        { label: '💧 نسبة الماء (%)',          cur: input.water_cut,        prop: opt.predicted_water_cut,  higher: false },
+        { label: '🔺 الضغط الأعلى (بار)',      cur: input.upstream_pres,    prop: opt.upstream_pres,        higher: null },
+        { label: '🔻 الضغط الأدنى (بار)',      cur: input.downstream_pres,  prop: opt.downstream_pres,      higher: null },
+        { label: '⚙️ فتحة الخانق',             cur: input.choke_size,       prop: opt.choke_size,           higher: null },
+    ];
+
+    const tbody = document.getElementById('detailTableBody');
+    tbody.innerHTML = rows.map(r => {
+        const curVal  = r.cur  !== null ? r.cur.toFixed(2)  : '-';
+        const propVal = r.prop !== null ? r.prop.toFixed(2) : '-';
+        let diff = '-', pct = '-', diffClass = '';
+
+        if (r.cur !== null && r.prop !== null) {
+            const d = r.prop - r.cur;
+            diff = (d >= 0 ? '+' : '') + d.toFixed(2);
+            pct  = r.cur !== 0 ? ((d / Math.abs(r.cur)) * 100).toFixed(1) + '%' : '-';
+
+            if (r.higher === true)  diffClass = d > 0  ? 'val-improve-pos' : (d < 0 ? 'val-improve-neg' : '');
+            if (r.higher === false) diffClass = d < 0  ? 'val-improve-pos' : (d > 0 ? 'val-improve-neg' : '');
+        }
+
+        return `<tr>
+            <td><strong>${r.label}</strong></td>
+            <td class="val-current">${curVal}</td>
+            <td class="val-proposed">${propVal}</td>
+            <td class="${diffClass}">${diff}</td>
+            <td class="${diffClass}">${pct}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ── الرسوم البيانية ──
+function buildCharts(input, opt) {
+    // ① رسم الإنتاج (Bar)
+    if (chartProduction) chartProduction.destroy();
+    const ctxProd = document.getElementById('productionChart').getContext('2d');
+    chartProduction = new Chart(ctxProd, {
+        type: 'bar',
+        data: {
+            labels: ['إنتاج النفط (م³/يوم)', 'إنتاج الماء (م³/يوم)'],
+            datasets: [
+                {
+                    label: 'الوضع الحالي',
+                    data: [
+                        input.oil_production   || 0,
+                        input.water_production || 0
+                    ],
+                    backgroundColor: 'rgba(102,126,234,0.7)',
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                },
+                {
+                    label: 'الوضع المقترح',
+                    data: [
+                        opt.predicted_oil,
+                        /* نقدّر الماء من نسبة الماء المقترحة والسائل الحالي */
+                        ((opt.predicted_water_cut / 100) * (input.total_liquid || (input.oil_production + (input.water_production||0))))
+                    ],
+                    backgroundColor: 'rgba(118,75,162,0.7)',
+                    borderColor: '#764ba2',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // ② رسم معاملات التشغيل (Radar)
+    if (chartParams) chartParams.destroy();
+    const ctxParam = document.getElementById('paramsChart').getContext('2d');
+    const upCur   = input.upstream_pres   || 0;
+    const downCur = input.downstream_pres || 0;
+    const chkCur  = input.choke_size      || 0;
+
+    chartParams = new Chart(ctxParam, {
+        type: 'radar',
+        data: {
+            labels: ['الضغط الأعلى', 'الضغط الأدنى', 'فتحة الخانق'],
+            datasets: [
+                {
+                    label: 'الوضع الحالي',
+                    data: [upCur, downCur, chkCur],
+                    backgroundColor: 'rgba(102,126,234,0.2)',
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#667eea',
+                },
+                {
+                    label: 'الوضع المقترح',
+                    data: [opt.upstream_pres, opt.downstream_pres, opt.choke_size],
+                    backgroundColor: 'rgba(118,75,162,0.2)',
+                    borderColor: '#764ba2',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#764ba2',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    grid: { color: '#e8e8e8' },
+                    ticks: { backdropColor: 'transparent', font: { size: 10 } }
+                }
+            }
+        }
+    });
+
+    // ③ رسم نسبة الماء (Horizontal Bar)
+    if (chartWaterCut) chartWaterCut.destroy();
+    const ctxWC = document.getElementById('waterCutChart').getContext('2d');
+    chartWaterCut = new Chart(ctxWC, {
+        type: 'bar',
+        data: {
+            labels: ['نسبة الماء (%)'],
+            datasets: [
+                {
+                    label: 'الوضع الحالي',
+                    data: [input.water_cut || 0],
+                    backgroundColor: 'rgba(231,76,60,0.7)',
+                    borderColor: '#e74c3c',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                },
+                {
+                    label: 'الوضع المقترح',
+                    data: [opt.predicted_water_cut],
+                    backgroundColor: 'rgba(39,174,96,0.7)',
+                    borderColor: '#27ae60',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                x: { beginAtZero: true, max: 100, grid: { color: '#f0f0f0' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ── شرح الخوارزمية بناءً على النتائج الفعلية ──
+function buildExplanation(input, opt, imp, confidence) {
+    const conf = Math.round(confidence * 100);
+    const oilPct = input.oil_production
+        ? ((imp.oil_gain / input.oil_production) * 100).toFixed(1)
+        : '–';
+    const upDiff   = input.upstream_pres   !== null ? (opt.upstream_pres   - (input.upstream_pres   || 0)).toFixed(2) : null;
+    const downDiff = input.downstream_pres !== null ? (opt.downstream_pres - (input.downstream_pres || 0)).toFixed(2) : null;
+    const chkDiff  = input.choke_size      !== null ? (opt.choke_size      - (input.choke_size      || 0)).toFixed(2) : null;
+
+    const upText   = upDiff   !== null ? (parseFloat(upDiff)   >= 0 ? `رفع الضغط الأعلى بمقدار +${upDiff} بار`   : `خفض الضغط الأعلى بمقدار ${upDiff} بار`)   : '';
+    const downText = downDiff !== null ? (parseFloat(downDiff) >= 0 ? `رفع الضغط الأدنى بمقدار +${downDiff} بار` : `خفض الضغط الأدنى بمقدار ${downDiff} بار`) : '';
+    const chkText  = chkDiff  !== null ? (parseFloat(chkDiff)  >= 0 ? `توسيع فتحة الخانق +${chkDiff}`            : `تضييق فتحة الخانق ${chkDiff}`)              : '';
+
+    const suggestions = [upText, downText, chkText].filter(Boolean);
+
+    document.getElementById('algoExplanation').innerHTML = `
+        <p>
+            <strong>📌 ما فعلته الشبكة العصبية:</strong><br>
+            استقبلت النموذجُ بياناتك الحالية (نفط: <strong>${(input.oil_production||0).toFixed(1)} م³</strong>، 
+            نسبة ماء: <strong>${(input.water_cut||0).toFixed(1)}%</strong>)، 
+            ثم طبّق خوارزمية <strong>L-BFGS-B</strong> على دالة الهدف:
+        </p>
+        <div class="formula-box" style="margin:12px 0;">
+            <div class="formula-line">minimize:  <span class="formula-highlight">-Oil + 0.5 × WaterCut</span></div>
+            <div class="formula-comment">  أي: تعظيم النفط = سالب النفط   |   تقليل الماء = معامل 0.5</div>
+        </div>
+        <p>
+            <strong>🔧 الإجراءات المقترحة:</strong><br>
+            ${suggestions.map(s => `• ${s}`).join('<br>')}
+        </p>
+        <p style="margin-top:12px;">
+            <strong>📈 النتيجة المتوقعة:</strong><br>
+            • زيادة إنتاج النفط بمقدار <strong style="color:#27ae60;">+${imp.oil_gain.toFixed(2)} م³/يوم</strong> 
+            (بنسبة <strong style="color:#27ae60;">+${oilPct}%</strong>)<br>
+            • تخفيض نسبة الماء بمقدار <strong style="color:#27ae60;">-${imp.water_cut_reduction.toFixed(2)}%</strong>
+        </p>
+        <p style="margin-top:12px;">
+            <strong>🎯 مستوى الثقة: ${conf}%</strong><br>
+            ${conf >= 80
+                ? '✅ ثقة عالية — النموذج مدرّب على بيانات كافية وتتنبأ الشبكة بدقة جيدة.'
+                : conf >= 60
+                    ? '⚠️ ثقة متوسطة — يُنصح بإضافة المزيد من البيانات التاريخية لتحسين الدقة.'
+                    : '🔴 ثقة منخفضة — النموذج يحتاج بيانات أكثر. اعتبر النتائج اقتراحات أولية فقط.'}
+        </p>
+    `;
+}
+
 function clearForm() {
-    ['total_liquid','oil_production','water_production','water_cut','upstream_pres','downstream_pres','choke_size']
-        .forEach(id => document.getElementById(id).value = '');
+    ['total_liquid','oil_production','water_production','water_cut',
+     'upstream_pres','downstream_pres','choke_size'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
     document.getElementById('resultsSection').style.display = 'none';
+    if (chartProduction) { chartProduction.destroy(); chartProduction = null; }
+    if (chartParams)     { chartParams.destroy();     chartParams     = null; }
+    if (chartWaterCut)   { chartWaterCut.destroy();   chartWaterCut   = null; }
 }
 </script>
 {% endblock %}
